@@ -886,7 +886,7 @@ YY_RULE_SETUP
 case 25:
 YY_RULE_SETUP
 #line 43 "mini.l"
-{ return token( TK_STRING ); }
+{ return token( CSTRING ); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP

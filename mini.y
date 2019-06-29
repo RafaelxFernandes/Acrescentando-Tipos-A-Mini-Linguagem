@@ -10,6 +10,8 @@
     extern "C" int yylex();
     
     #define YYSTYPE Atributos
+
+    typedef string Tipo;
     
     int linha = 1;
     int coluna = 1;
@@ -17,9 +19,20 @@
     struct Atributos {
         string v;
         string c;
+        Tipo t;
         int linha;
     };
-    
+
+    map<string,Tipo> tsVar;
+
+    map<string, Tipo> resOpr = {
+        { "+II", "I" }, { "+ID", "D" }, { "+DI", "D" }, { "+DD", "D" },
+        { "+CC", "S" }, { "+CS", "S" }, { "+SC", "S" }, { "+SS", "S" },
+        { "+CI", "I" }, { "+IC", "I" }
+    };
+
+    map<Tipo, int> nVar;
+
     int yylex();
     int yyparse();
     
@@ -30,30 +43,32 @@
     string declaraInt(Atributos s2);
     string concatenaVars(Atributos s1, Atributos s3);
     string geraVarComArray(Atributos s1, Atributos s3);
-    string geraTemp();
+    string geraTemp(Tipo t);
     string declaraVar();
     string geraEntrada(Atributos s2);
     string geraSaida(Atributos s2);
     string geraIf(Atributos s2, Atributos s4, Atributos s6);
     string geraIfSemElse(Atributos s2, Atributos s4);
     string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9);
-   
+    string toString(int n);
+
     Atributos geraAtribuicao(Atributos s1, Atributos s3);
     Atributos geraAtribuicaoComArray(Atributos s1, Atributos s3, Atributos s6);
     Atributos geraEntradaComArray(Atributos s2, Atributos s4);
     Atributos geraValorComArray(Atributos s1, Atributos s3); 
     Atributos gera_codigo_operacao(Atributos s1, Atributos s2, Atributos s3);
     Atributos gera_codigo_comparacao(Atributos s1, string s2, Atributos s3);
-    Atributos gera_codigo_negacao(Atributos s1, Atributos s2);
-    
-    map<string,string> ts;
+    Atributos geraCodigoOperador(Atributos a, string operador, Atributos b);
+
+    Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b);
+
 %}
 
 %start S
 
 %token CINT CDOUBLE TK_ID TK_VAR TK_CONSOLE TK_SHIFTR TK_SHIFTL TK_ENDL
 %token TK_FOR TK_IN TK_2PT TK_IF TK_THEN TK_ELSE TK_BEGIN TK_END 
-%token TK_STRING TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
+%token CSTRING TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
 
 %right '!'
 %nonassoc "&&" "||"
@@ -114,9 +129,9 @@ SAIDA       : TK_CONSOLE SAIDAS                                 { $$.c = $2.c; }
 SAIDAS      : TK_SHIFTL E ';'                                   { $$.c = geraSaida($2); }
             | TK_SHIFTL E TK_ENDL ';'                           { $$.c = geraSaida($2); }
             | TK_SHIFTL E SAIDAS                                { $$.c = geraSaida($2) + $3.c; }
-            | TK_SHIFTL TK_STRING ';'                           { $$.c = geraSaida($2); }
-            | TK_SHIFTL TK_STRING TK_ENDL ';'                   { $$.c = geraSaida($2); }
-            | TK_SHIFTL TK_STRING SAIDAS                        { $$.c = geraSaida($2) + $3.c; }
+            | TK_SHIFTL CSTRING ';'                             { $$.c = geraSaida($2); }
+            | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
+            | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
             | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
             ;
 
@@ -134,11 +149,11 @@ ATR         : TK_ID '=' E ';'                                   { $$ = geraAtrib
             | TK_ID '[' E ']' '=' E ';'                         { $$ = geraAtribuicaoComArray($1, $3, $6); }
             ;
   
-E           : E '+' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E '-' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E '*' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E '/' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E '%' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
+E           : E '+' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E '-' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E '*' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E '/' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E '%' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
             | V
             ;
 
@@ -160,8 +175,10 @@ L           : C TK_AND C                                        { $$ = gera_codi
             ;
 
 V           : TK_ID '[' E ']'                                   { $$ = geraValorComArray($1, $3); }
-            | TK_ID                                             { $$.c = ""; $$.v = $1.v; }
-            | CINT                                              { $$.c = ""; $$.v = $1.v; }
+            | TK_ID                                             { $$.c = ""; $$.v = $1.v; $$.t = "I"; }
+            | CINT                                              { $$.c = ""; $$.v = $1.v; $$.t = "I"; }
+            | CDOUBLE                                           { $$.c = ""; $$.v = $1.v; $$.t = "D"; }
+            | CSTRING                                           { $$.c = ""; $$.v = $1.v; $$.t = "S"; }
             | '(' E ')'                                         { $$ = $2; }
             ;
 
@@ -217,21 +234,25 @@ string geraVarComArray(Atributos s1, Atributos s3){
     return gerado.c;
 }
 
-string geraTemp(){
-    static int n_var_temp = 0;
-    
-    string nome = "t" + to_string( n_var_temp++ );
-    
-    ts[nome] = "  int " + nome + ";\n";
-    
+string geraTemp(Tipo t){    
+    string nome = "temp-" + t + toString( nVar[t]++ );
+
     return nome;
 }
 
 string declaraVar(){
     string saida;
     
-    for(auto p: ts){
-        saida += p.second;
+    for(auto p: nVar){
+        for(int i = 0; i < p.second; i++ ){
+            string nomeTipo;
+            if(p.first == "I"){
+                nomeTipo = "int";
+            } else if(p.first == "D"){
+                nomeTipo = "double";
+            }
+        saida += nomeTipo + "temp-" + p.first + toString(i) + ";\n";
+        }
     }
     
     return saida;
@@ -282,7 +303,7 @@ string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9){
     
     static int nVarCont = 0;
     
-    string cond = geraTemp();
+    string cond = geraTemp("I");
     
     gerado.c = s5.c + s7.c + s2.v + " = " + s5.v + ";\n"
                 + "meio" + to_string(nVarCont++) + ": \n" + cond + " = " + s2.v + " > " + s7.v + ";\n"
@@ -317,7 +338,7 @@ Atributos geraAtribuicaoComArray(Atributos s1, Atributos s3, Atributos s6){
 Atributos geraEntradaComArray(Atributos s2, Atributos s4){
     Atributos gerado;
     
-    gerado.v = geraTemp();
+    gerado.v = geraTemp("I");
     
     gerado.c = s4.c + "cin >> " + gerado.v + ";\n" + s2.v + "[" + s4.v + "] = " + gerado.v + ";\n";
     
@@ -327,7 +348,7 @@ Atributos geraEntradaComArray(Atributos s2, Atributos s4){
 Atributos geraValorComArray(Atributos s1, Atributos s3){
     Atributos gerado;
     
-    gerado.v = geraTemp();
+    gerado.v = geraTemp("I");
     
     gerado.c = s3.c + gerado.v + " = " + s1.v + "[" + s3.v + "];\n";
     
@@ -337,7 +358,7 @@ Atributos geraValorComArray(Atributos s1, Atributos s3){
 Atributos gera_codigo_operacao(Atributos param1, Atributos opr, Atributos param2){
     Atributos gerado;
     
-    gerado.v = geraTemp();
+    gerado.v = geraTemp("I");
     
     gerado.c = param1.c + param2.c + "  " + gerado.v + " = " + param1.v + " " + opr.v + " " + param2.v + ";\n";
     
@@ -347,11 +368,42 @@ Atributos gera_codigo_operacao(Atributos param1, Atributos opr, Atributos param2
 Atributos gera_codigo_comparacao(Atributos param1, string opr, Atributos param2){
     Atributos gerado;
 
-    gerado.v = geraTemp();
+    gerado.v = geraTemp("I");
     
     gerado.c = param1.c + param2.c + gerado.v + " = " + param1.v + " " + opr + " " + param2.v + ";\n";
     
     return gerado;
+}
+
+//Funcoes acrescentadas para o 'Acrescentando tipos a mini linguagem'
+string toString(int n){
+    char buf[20] = "";
+
+    sprintf(buf, "%d", n);
+
+    return buf;
+}
+
+Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
+    Atributos r;
+
+    r.t = buscaTipoOperacao(a.t, operador, b.t);
+
+    if(r.t == ""){
+        string temp = "Operacao '" + operador + "' invalida entre " + a.t + " e " + b.t;    
+        yyerror(temp.c_str());
+    }
+
+    r.v = geraTemp(r.t);
+
+    r.c = a.c + b.c + " " + r.v + " = " + a.v + operador + b.v + ";\n";
+
+    return r;
+}
+
+Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b){
+    return resOpr[operador + a + b];
+    //TODO: usar o find
 }
 
 int main(int argc, char* st[]){ 

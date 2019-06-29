@@ -40,7 +40,7 @@ STRING  \"(\"\"|\\\"|[^\n\"])*\"
 "begin"    { return token( TK_BEGIN ); }
 "end"      { return token( TK_END ); }
 
-{STRING}   { return token( TK_STRING ); }
+{STRING}   { return token( CSTRING ); }
 
 {ID}       { return token( TK_ID ); }
 
