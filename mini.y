@@ -30,27 +30,27 @@
         { "+CC", "S" }, { "+CS", "S" }, { "+SC", "S" }, { "+SS", "S" },
         { "+CI", "I" }, { "+IC", "I" },
         { "<II", "B" }, { "<ID", "B" }, { "<DI", "B" }, { "<DD", "B" },
-        { "<CC", "B" }. { "<CS", "B" }, { "<SC", "B" }, { "<SS", "B" },
+        { "<CC", "B" }, { "<CS", "B" }, { "<SC", "B" }, { "<SS", "B" },
         { "<IC", "B" }, { "<CI", "B" },
         { "<BB", "B" },
         { "<=II", "B" }, { "<=ID", "B" }, { "<=DI", "B" }, { "<=DD", "B" },
-        { "<=CC", "B" }. { "<=CS", "B" }, { "<=SC", "B" }, { "<=SS", "B" },
+        { "<=CC", "B" }, { "<=CS", "B" }, { "<=SC", "B" }, { "<=SS", "B" },
         { "<=IC", "B" }, { "<=CI", "B" },
         { "<=BB", "B" },
         { ">II", "B" }, { ">ID", "B" }, { ">DI", "B" }, { ">DD", "B" },
-        { ">CC", "B" }. { ">CS", "B" }, { ">SC", "B" }, { ">SS", "B" },
+        { ">CC", "B" }, { ">CS", "B" }, { ">SC", "B" }, { ">SS", "B" },
         { ">IC", "B" }, { ">CI", "B" },
         { ">BB", "B" },
         { ">=II", "B" }, { ">=ID", "B" }, { ">=DI", "B" }, { ">=DD", "B" },
-        { ">=CC", "B" }. { ">=CS", "B" }, { ">=SC", "B" }, { ">=SS", "B" },
+        { ">=CC", "B" }, { ">=CS", "B" }, { ">=SC", "B" }, { ">=SS", "B" },
         { ">=IC", "B" }, { ">=CI", "B" },
         { ">=BB", "B" },
         { "==II", "B" }, { "==ID", "B" }, { "==DI", "B" }, { "==DD", "B" },
-        { "==CC", "B" }. { "==CS", "B" }, { "==SC", "B" }, { "==SS", "B" },
+        { "==CC", "B" }, { "==CS", "B" }, { "==SC", "B" }, { "==SS", "B" },
         { "==IC", "B" }, { "==CI", "B" },
         { "==BB", "B" },
         { "<>II", "B" }, { "<>ID", "B" }, { "<>DI", "B" }, { "<>DD", "B" },
-        { "<>CC", "B" }. { "<>CS", "B" }, { "<>SC", "B" }, { "<>SS", "B" },
+        { "<>CC", "B" }, { "<>CS", "B" }, { "<>SC", "B" }, { "<>SS", "B" },
         { "<>IC", "B" }, { "<>CI", "B" },
         { "<>BB", "B" }
     };
@@ -64,7 +64,6 @@
     
     void geraPrograma(Atributos s1);
     
-    string declaraInt(Atributos s2);
     string concatenaVars(Atributos s1, Atributos s3);
     string geraVarComArray(Atributos s1, Atributos s3);
     string geraTemp(Tipo t);
@@ -76,6 +75,7 @@
     string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9);
     string toString(int n);
 
+    Atributos declaraVariavelComTipo(Atributos s1, Atributos s2);
     Atributos geraAtribuicao(Atributos s1, Atributos s3);
     Atributos geraAtribuicaoComArray(Atributos s1, Atributos s3, Atributos s6);
     Atributos geraEntradaComArray(Atributos s2, Atributos s4);
@@ -93,6 +93,7 @@
 %token CINT CDOUBLE TK_ID TK_VAR TK_CONSOLE TK_SHIFTR TK_SHIFTL TK_ENDL
 %token TK_FOR TK_IN TK_2PT TK_IF TK_THEN TK_ELSE TK_BEGIN TK_END 
 %token CSTRING TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
+%token TK_INT TK_CHAR TK_STRING TK_BOOLEAN TK_REAL
 
 %nonassoc "&&" "||"
 %nonassoc '<' '>' "<=" "=>"  "==" "!="
@@ -127,7 +128,11 @@ CMDX        : ENTRADA
 BLOCO       : TK_BEGIN CMDS TK_END                              { $$.c = $2.c; }
             ;
     
-DECLVAR     : TK_VAR VARS                                       { $$.c = declaraInt($2); $$.v = $2.v; }
+DECLVAR     : TK_INT VARS
+            | TK_CHAR VARS
+            | TK_STRING VARS
+            | TK_BOOLEAN VARS
+            | TK_REAL VARS                                       
             ;
     
 VARS        : VARS ',' VAR                                      { $$.c = concatenaVars($1, $3); $$.v = $1.v; }
@@ -235,14 +240,6 @@ void geraPrograma(Atributos s1){
        << fim_programa;
 }
 
-string declaraInt(Atributos s2){
-    Atributos gerado;
-    
-    gerado.c = "int " + s2.c + ";\n";
-    
-    return gerado.c;
-}
-
 string concatenaVars(Atributos s1, Atributos s3){
     Atributos gerado;
     
@@ -338,6 +335,18 @@ string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9){
                 + "fim" + to_string(nVarCont) + ": \n";
     
     return gerado.c;
+}
+
+Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
+    Atributos gerado;
+    
+    gerado.v = s2.v;
+
+    gerado.c = s1.v + s2.c + ";\n";
+    
+    gerado.t = s1.v;
+
+    return gerado;
 }
 
 Atributos geraAtribuicao(Atributos s1, Atributos s3){

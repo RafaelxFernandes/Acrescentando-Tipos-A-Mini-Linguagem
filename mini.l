@@ -27,6 +27,11 @@ STRING  \"(\"\"|\\\"|[^\n\"])*\"
 "||"       { return TK_OR; }
 
 "var"	   { return token( TK_VAR ); }
+"int"      { return token( TK_INT ); }
+"char"     { return token( TK_CHAR ); }
+"string"   { return token( TK_STRING ); }
+"boolean"  { return token( TK_BOOLEAN ); }
+"real"     { return token( TK_REAL ); }
 "console"  { return token( TK_CONSOLE ); }
 ">>"       { return token( TK_SHIFTR ); }
 "<<"       { return token( TK_SHIFTL ); }
