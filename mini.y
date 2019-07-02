@@ -85,6 +85,7 @@
     Atributos geraCodigoOperador(Atributos a, string operador, Atributos b);
 
     Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b);
+    Tipo traduzTipo(Tipo t);
 
 %}
 
@@ -424,7 +425,9 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     r.t = buscaTipoOperacao(a.t, operador, b.t);
 
     if(r.t == ""){
-        string temp = "Operacao '" + operador + "' invalida entre " + a.t + " e " + b.t;    
+        a.t = traduzTipo(a.t);
+        b.t = traduzTipo(b.t);
+        string temp = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;    
         yyerror(temp.c_str());
     }
 
@@ -437,7 +440,20 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
 Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b){
     return resOpr[operador + a + b];
-    //TODO: usar o find
+}
+
+Tipo traduzTipo(Tipo t){
+    if(t == "I"){
+        t = "int";
+    } if(t == "D"){
+        t = "real";
+    } if(t == "S"){
+        t = "string";
+    } if(t == "C"){
+        t = "char";
+    }
+
+    return t;
 }
 
 int main(int argc, char* st[]){ 
