@@ -70,11 +70,11 @@
 %token TK_FOR TK_IN TK_2PT TK_IF TK_THEN TK_ELSE TK_BEGIN TK_END 
 %token CSTRING TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
 
-%right '!'
 %nonassoc "&&" "||"
 %nonassoc '<' '>' "<=" "=>"  "==" "!="
 %left '+' '-'
 %left '*' '/' '%'
+%right '!'
 
 %%
 
@@ -129,10 +129,10 @@ SAIDA       : TK_CONSOLE SAIDAS                                 { $$.c = $2.c; }
 SAIDAS      : TK_SHIFTL E ';'                                   { $$.c = geraSaida($2); }
             | TK_SHIFTL E TK_ENDL ';'                           { $$.c = geraSaida($2); }
             | TK_SHIFTL E SAIDAS                                { $$.c = geraSaida($2) + $3.c; }
-            | TK_SHIFTL CSTRING ';'                             { $$.c = geraSaida($2); }
-            | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
-            | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
-            | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
+            // | TK_SHIFTL CSTRING ';'                             { $$.c = geraSaida($2); }
+            // | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
+            // | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
+            // | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
             ;
 
 FOR         : TK_FOR TK_ID TK_IN '[' E TK_2PT E ']' BLOCO ';'   { $$.c = geraFor($2, $5, $7, $9); }
