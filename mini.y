@@ -133,6 +133,7 @@ SAIDAS      : TK_SHIFTL E ';'                                   { $$.c = geraSai
             // | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
             // | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
             // | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
+            |                                                   { $$.c = ""; $$.v = ""; }
             ;
 
 FOR         : TK_FOR TK_ID TK_IN '[' E TK_2PT E ']' BLOCO ';'   { $$.c = geraFor($2, $5, $7, $9); }
@@ -278,7 +279,7 @@ string geraIf(Atributos s2, Atributos s4, Atributos s6){
     Atributos gerado;
     
     gerado.c = s2.c
-                + "if (" + s2.v + ") goto meio;" +  +";\n"
+                + "if (" + s2.v + ") goto meio;" + ";\n"
                 + s6.c + "goto fim;\n"
                 + "meio:\n" + s4.c
                 + "fim:\n";
@@ -328,9 +329,9 @@ Atributos geraAtribuicao(Atributos s1, Atributos s3){
 Atributos geraAtribuicaoComArray(Atributos s1, Atributos s3, Atributos s6){
     Atributos gerado;
     
-    gerado.c = s3.c + s6.c + s1.v + "[" + s3.v + "] = " + s6.v  + ";";
-    
     gerado.v = s6.v;
+
+    gerado.c = s3.c + s6.c + s1.v + "[" + s3.v + "] = " + s6.v  + ";";
     
     return gerado;
 }
@@ -360,7 +361,7 @@ Atributos gera_codigo_operacao(Atributos param1, Atributos opr, Atributos param2
     
     gerado.v = geraTemp("I");
     
-    gerado.c = param1.c + param2.c + "  " + gerado.v + " = " + param1.v + " " + opr.v + " " + param2.v + ";\n";
+    gerado.c = param1.c + param2.c + " " + gerado.v + " = " + param1.v + " " + opr.v + " " + param2.v + ";\n";
     
     return gerado;
 }
