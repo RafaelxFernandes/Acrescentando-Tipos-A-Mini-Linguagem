@@ -8,6 +8,7 @@ INT     {DIGITO}+
 DOUBLE  {DIGITO}+("."{DIGITO}+)?
 ID      {LETRA}({LETRA}|{DIGITO})*
 
+CHAR \'.\'
 STRING  \"(\"\"|\\\"|[^\n\"])*\"
 
 %%
@@ -45,6 +46,7 @@ STRING  \"(\"\"|\\\"|[^\n\"])*\"
 "begin"    { return token( TK_BEGIN ); }
 "end"      { return token( TK_END ); }
 
+{CHAR}     { return token( CCHAR ); }
 {STRING}   { return token( CSTRING ); }
 
 {ID}       { return token( TK_ID ); }

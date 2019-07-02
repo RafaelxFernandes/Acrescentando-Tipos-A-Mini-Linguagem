@@ -93,8 +93,8 @@
 
 %token CINT CDOUBLE TK_ID TK_VAR TK_CONSOLE TK_SHIFTR TK_SHIFTL TK_ENDL
 %token TK_FOR TK_IN TK_2PT TK_IF TK_THEN TK_ELSE TK_BEGIN TK_END 
-%token CSTRING TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
-%token TK_INT TK_CHAR TK_STRING TK_BOOLEAN TK_REAL
+%token TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
+%token TK_INT TK_CHAR TK_STRING TK_BOOLEAN TK_REAL CCHAR CSTRING 
 
 %nonassoc "&&" "||"
 %nonassoc '<' '>' "<=" "=>"  "==" "!="
@@ -129,11 +129,11 @@ CMDX        : ENTRADA
 BLOCO       : TK_BEGIN CMDS TK_END                              { $$.c = $2.c; }
             ;
     
-DECLVAR     : TK_INT VARS
-            | TK_CHAR VARS
-            | TK_STRING VARS
-            | TK_BOOLEAN VARS
-            | TK_REAL VARS                                       
+DECLVAR     : TK_INT VARS                                       { $$ = declaraVariavelComTipo($1, $2); }
+            | TK_CHAR VARS                                      { $$ = declaraVariavelComTipo($1, $2); }
+            | TK_STRING VARS                                    { $$ = declaraVariavelComTipo($1, $2); }
+            | TK_BOOLEAN VARS                                   { $$ = declaraVariavelComTipo($1, $2); }
+            | TK_REAL VARS                                      { $$ = declaraVariavelComTipo($1, $2); }
             ;
     
 VARS        : VARS ',' VAR                                      { $$.c = concatenaVars($1, $3); $$.v = $1.v; }
@@ -210,6 +210,7 @@ V           : TK_ID '[' E ']'                                   { $$ = geraValor
             | CINT                                              { $$.c = ""; $$.v = $1.v; $$.t = "I"; }
             | CDOUBLE                                           { $$.c = ""; $$.v = $1.v; $$.t = "D"; }
             | CSTRING                                           { $$.c = ""; $$.v = $1.v; $$.t = "S"; }
+            | CCHAR                                             { $$.c = ""; $$.v = $1.v; $$.t = "C"; }
             | '(' E ')'                                         { $$ = $2; }
             ;
 
@@ -258,7 +259,7 @@ string geraVarComArray(Atributos s1, Atributos s3){
 }
 
 string geraTemp(Tipo t){    
-    string nome = "temp-" + t + toString( nVar[t]++ );
+    string nome = " temp_" + t + toString( nVar[t]++ );
 
     return nome;
 }
@@ -274,7 +275,7 @@ string declaraVar(){
             } else if(p.first == "D"){
                 nomeTipo = "double";
             }
-        saida += nomeTipo + "temp-" + p.first + toString(i) + ";\n";
+        saida += nomeTipo + " temp_" + p.first + toString(i) + ";\n";
         }
     }
     
@@ -343,7 +344,7 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
     
     gerado.v = s2.v;
 
-    gerado.c = s1.v + s2.c + ";\n";
+    gerado.c = s1.v + " " + s2.c + ";\n";
     
     gerado.t = s1.v;
 
@@ -427,6 +428,7 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     if(r.t == ""){
         a.t = traduzTipo(a.t);
         b.t = traduzTipo(b.t);
+
         string temp = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;    
         yyerror(temp.c_str());
     }
