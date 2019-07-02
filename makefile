@@ -1,5 +1,5 @@
-# all: mini entrada.txt
-# 	./mini	
+all: mini entrada.txt
+	./mini < entrada.txt
 
 lex.yy.c: mini.l
 	lex mini.l

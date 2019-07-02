@@ -161,7 +161,7 @@ SAIDAS      : TK_SHIFTL E ';'                                   { $$.c = geraSai
             // | TK_SHIFTL CSTRING ';'                             { $$.c = geraSaida($2); }
             // | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
             // | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
-            // | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
+            | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
             |                                                   { $$.c = ""; $$.v = ""; }
             ;
 
