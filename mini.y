@@ -29,6 +29,18 @@
         { "+II", "I" }, { "+ID", "D" }, { "+DI", "D" }, { "+DD", "D" },
         { "+CC", "S" }, { "+CS", "S" }, { "+SC", "S" }, { "+SS", "S" },
         { "+CI", "I" }, { "+IC", "I" },
+        { "-II", "I" }, { "-ID", "D" }, { "-DI", "D" }, { "-DD", "D" },
+        { "-CC", "S" }, { "-CS", "S" }, { "-SC", "S" }, { "-SS", "S" },
+        { "-CI", "I" }, { "-IC", "I" },
+        { "*II", "I" }, { "*ID", "D" }, { "*DI", "D" }, { "*DD", "D" },
+        { "*CC", "S" }, { "*CS", "S" }, { "*SC", "S" }, { "*SS", "S" },
+        { "*CI", "I" }, { "*IC", "I" },
+        { "/II", "I" }, { "/ID", "D" }, { "/DI", "D" }, { "/DD", "D" },
+        { "/CC", "S" }, { "/CS", "S" }, { "/SC", "S" }, { "/SS", "S" },
+        { "/CI", "I" }, { "/IC", "I" },
+        { "%II", "I" }, { "%ID", "D" }, { "%DI", "D" }, { "%DD", "D" },
+        { "%CC", "S" }, { "%CS", "S" }, { "%SC", "S" }, { "%SS", "S" },
+        { "%CI", "I" }, { "%IC", "I" },
         { "<II", "B" }, { "<ID", "B" }, { "<DI", "B" }, { "<DD", "B" },
         { "<CC", "B" }, { "<CS", "B" }, { "<SC", "B" }, { "<SS", "B" },
         { "<IC", "B" }, { "<CI", "B" },
@@ -269,12 +281,8 @@ string declaraVar(){
     
     for(auto p: nVar){
         for(int i = 0; i < p.second; i++ ){
-            string nomeTipo;
-            if(p.first == "I"){
-                nomeTipo = "int";
-            } else if(p.first == "D"){
-                nomeTipo = "double";
-            }
+            string nomeTipo = "double";
+            
         saida += nomeTipo + " temp_" + p.first + toString(i) + ";\n";
         }
     }
@@ -345,7 +353,13 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
     gerado.v = s2.v;
 
     gerado.c = s1.v + " " + s2.c + ";\n";
-    
+
+    if(s1.v == "real"){
+        gerado.c = "double " + s2.c + ";\n";
+    } if(s1.v == "boolean"){
+        gerado.c = "int " + s2.c + ";\n";
+    }
+
     gerado.t = s1.v;
 
     return gerado;
