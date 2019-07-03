@@ -1,8 +1,5 @@
-string a;
-real b;
-console >> b;
-console >> a;
-if b <= a then
-  console << "a é maior" << endl;
-else
-  console << "b é maior" << endl;
+string a, b, c;
+a = "hello, ";
+b = "world";
+c = b + "!";
+console << a + c + "!" << endl;
