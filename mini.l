@@ -8,7 +8,7 @@ INT     {DIGITO}+
 DOUBLE  {DIGITO}+("."{DIGITO}+)?
 ID      {LETRA}({LETRA}|{DIGITO})*
 
-CHAR \'.\'
+CHAR    \'.\'
 STRING  \"(\"\"|\\\"|[^\n\"])*\"
 
 %%

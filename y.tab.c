@@ -1518,7 +1518,11 @@ yyreduce:
 
   case 21:
 #line 158 "mini.y" /* yacc.c:1646  */
+<<<<<<< HEAD
     { (yyval).c = "string"; (yyval).v = (yyvsp[0]).v; (yyval).t = "S"; }
+=======
+    { (yyval).c = "char"; (yyval).v = (yyvsp[0]).v; (yyval).t = "S"; }
+>>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 #line 1523 "y.tab.c" /* yacc.c:1646  */
     break;
 
@@ -2261,7 +2265,11 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
     gerado.v = geraTemp(gerado.t);
 
+<<<<<<< HEAD
     gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v + ";\n";
+=======
+    gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v;
+>>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 
     if((a.t == "S") && (b.t == "S")){
         if(operador == "+"){
@@ -2299,7 +2307,11 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     }  else if(operador == "<>"){
         gerado.c = a.c + b.c + gerado.v + " = " + a.v + " <> " + b.v;
     } else{
+<<<<<<< HEAD
         gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v  + ";\n";
+=======
+        gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v;
+>>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
     }
 
     if(gerado.t == ""){
@@ -2320,6 +2332,7 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
    
     gerado.t = guardaTipo(s1.t);
 
+<<<<<<< HEAD
     gerado.c = s1.c + " " + s2.c + ";\n";
 
     if(gerado.t == "S"){
@@ -2328,6 +2341,14 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
 
         char delimitador = ',';
 
+=======
+    if(gerado.t == "S"){
+        string aux = "";
+        string token;
+
+        char delimitador = ',';
+
+>>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
         stringstream ss(s2.c);
 
         while(getline(ss, token, delimitador)){
@@ -2347,6 +2368,7 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
     gerado.v = "";
 
+<<<<<<< HEAD
     gerado.t = guardaTipo(s2.t);
 
     gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
@@ -2367,6 +2389,11 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
         gerado.c += aux; 
     }
+=======
+    gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
+
+    gerado.t = guardaTipo(s2.t);
+>>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 
     return gerado;
 }
