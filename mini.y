@@ -288,27 +288,34 @@ string geraTemp(Tipo t){
 
 string declaraTemp() {
     string saida;
+    string res;
     string nomeTipo;
 
     for( auto p : nVar ){
         for( int i = 0; i < p.second; i ++ ) {
             if(p.first == "I"){
                 nomeTipo = "int";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "D"){
                 nomeTipo = "double";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "S"){
                 nomeTipo = "char";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + "[257];\n";
             } else if(p.first == "C"){
                 nomeTipo = "char";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "B"){
                 nomeTipo = "int";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             }
-    
-            saida += nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
+            
+            res += saida;
         }
+
     }
 
-    return saida;
+    return res;
 }
 
 
@@ -375,6 +382,10 @@ Atributos geraAtribuicao(Atributos s1, Atributos s3){
     gerado.v = s1.v;
     
     gerado.c = s1.c + s3.c + " " + gerado.v + " = " + s3.v + ";\n";
+
+    if(s3.t == "S"){
+        gerado.c = s1.c + s3.c + "strncpy(" + s1.v + ", "  + s3.v  + ", 255);\n";
+    }
     
     return gerado;
 }
@@ -475,6 +486,7 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     Atributos gerado;
 
     string temp = geraTemp("I");
+    string temp2 = geraTemp("I");
     
     gerado.t = buscaTipoOperacao(a.t, operador, b.t);
 
@@ -484,15 +496,15 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
     if((a.t == "S") && (b.t == "S")){
         if(operador == "+"){
-            string inicializa = gerado.v + "[255] = 0;\n";
+            string inicializa = a.c + b.c + gerado.v + "[255] = 0;\n" + "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
 
             string cat = temp + " = strlen(" + gerado.v + ");\n";
             
-            cat += "strncat(" + a.v + ", " + b.v + ", 255);\n";
+            cat += temp2 + " = 255 - " + temp + ";\n";
+
+            cat += "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n\n";
             
-            string copy = "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
-            
-            gerado.c = a.c + b.c + inicializa + cat + copy;
+            gerado.c = a.c + b.c + inicializa + cat;
         } else if((operador == ">") || (operador == "<") || (operador == ">=") 
                 || (operador == "<=") || (operador == "==") || (operador == "!=")){
                     gerado.c = a.c + b.c + comparaStringString(a.v, b.v, operador, gerado.v);
@@ -544,6 +556,7 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
     if(gerado.t == "S"){
         string aux = "";
         string token;
+        gerado.c = "";
 
         char delimitador = ',';
 

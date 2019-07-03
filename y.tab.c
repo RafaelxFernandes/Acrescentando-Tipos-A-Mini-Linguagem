@@ -1518,11 +1518,7 @@ yyreduce:
 
   case 21:
 #line 158 "mini.y" /* yacc.c:1646  */
-<<<<<<< HEAD
     { (yyval).c = "string"; (yyval).v = (yyvsp[0]).v; (yyval).t = "S"; }
-=======
-    { (yyval).c = "char"; (yyval).v = (yyvsp[0]).v; (yyval).t = "S"; }
->>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 #line 1523 "y.tab.c" /* yacc.c:1646  */
     break;
 
@@ -2073,27 +2069,34 @@ string geraTemp(Tipo t){
 
 string declaraTemp() {
     string saida;
+    string res;
     string nomeTipo;
 
     for( auto p : nVar ){
         for( int i = 0; i < p.second; i ++ ) {
             if(p.first == "I"){
                 nomeTipo = "int";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "D"){
                 nomeTipo = "double";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "S"){
                 nomeTipo = "char";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + "[257];\n";
             } else if(p.first == "C"){
                 nomeTipo = "char";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             } else if(p.first == "B"){
                 nomeTipo = "int";
+                saida = nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
             }
-    
-            saida += nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
+            
+            res += saida;
         }
+
     }
 
-    return saida;
+    return res;
 }
 
 
@@ -2160,6 +2163,10 @@ Atributos geraAtribuicao(Atributos s1, Atributos s3){
     gerado.v = s1.v;
     
     gerado.c = s1.c + s3.c + " " + gerado.v + " = " + s3.v + ";\n";
+
+    if(s3.t == "S"){
+        gerado.c = s1.c + s3.c + "strncpy(" + s1.v + ", "  + s3.v  + ", 255);\n";
+    }
     
     return gerado;
 }
@@ -2260,28 +2267,25 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     Atributos gerado;
 
     string temp = geraTemp("I");
+    string temp2 = geraTemp("I");
     
     gerado.t = buscaTipoOperacao(a.t, operador, b.t);
 
     gerado.v = geraTemp(gerado.t);
 
-<<<<<<< HEAD
     gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v + ";\n";
-=======
-    gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v;
->>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 
     if((a.t == "S") && (b.t == "S")){
         if(operador == "+"){
-            string inicializa = gerado.v + "[255] = 0;\n";
+            string inicializa = a.c + b.c + gerado.v + "[255] = 0;\n" + "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
 
             string cat = temp + " = strlen(" + gerado.v + ");\n";
             
-            cat += "strncat(" + a.v + ", " + b.v + ", 255);\n";
+            cat += temp2 + " = 255 - " + temp + ";\n";
+
+            cat += "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n\n";
             
-            string copy = "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
-            
-            gerado.c = a.c + b.c + inicializa + cat + copy;
+            gerado.c = a.c + b.c + inicializa + cat;
         } else if((operador == ">") || (operador == "<") || (operador == ">=") 
                 || (operador == "<=") || (operador == "==") || (operador == "!=")){
                     gerado.c = a.c + b.c + comparaStringString(a.v, b.v, operador, gerado.v);
@@ -2307,11 +2311,7 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     }  else if(operador == "<>"){
         gerado.c = a.c + b.c + gerado.v + " = " + a.v + " <> " + b.v;
     } else{
-<<<<<<< HEAD
         gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v  + ";\n";
-=======
-        gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v;
->>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
     }
 
     if(gerado.t == ""){
@@ -2332,23 +2332,15 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
    
     gerado.t = guardaTipo(s1.t);
 
-<<<<<<< HEAD
     gerado.c = s1.c + " " + s2.c + ";\n";
 
     if(gerado.t == "S"){
         string aux = "";
         string token;
+        gerado.c = "";
 
         char delimitador = ',';
 
-=======
-    if(gerado.t == "S"){
-        string aux = "";
-        string token;
-
-        char delimitador = ',';
-
->>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
         stringstream ss(s2.c);
 
         while(getline(ss, token, delimitador)){
@@ -2368,7 +2360,6 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
     gerado.v = "";
 
-<<<<<<< HEAD
     gerado.t = guardaTipo(s2.t);
 
     gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
@@ -2389,11 +2380,6 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
         gerado.c += aux; 
     }
-=======
-    gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
-
-    gerado.t = guardaTipo(s2.t);
->>>>>>> d89b308178b97573b883fe24f1c56524ae6ef673
 
     return gerado;
 }
