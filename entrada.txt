@@ -1,8 +1,8 @@
-int i;
-real num, sqr;
-console >> num;
-sqr = num/2;
-for i in [0..15] begin
-  sqr = sqr - (sqr*sqr - num)/(2*sqr);
-end;
-console << sqr;
+string a;
+real b;
+console >> b;
+console >> a;
+if b <= a then
+  console << "a é maior" << endl;
+else
+  console << "b é maior" << endl;

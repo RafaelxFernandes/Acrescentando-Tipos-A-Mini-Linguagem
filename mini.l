@@ -20,13 +20,14 @@ STRING  \"(\"\"|\\\"|[^\n\"])*\"
 {INT} 	   { return token( CINT ); }
 {DOUBLE}   { return token( CDOUBLE ); }
 
-">="       { return TK_MAIG; }
-"<="       { return TK_MEIG; }
-"=="       { return TK_IG; }
-"!="       { return TK_DIF; }
-"&&"       { return TK_AND; }
-"||"       { return TK_OR; }
+">="       { return token( TK_MAIG ); }
+"<="       { return token( TK_MEIG); }
+"=="       { return token( TK_IG ); }
+"<>"       { return token( TK_DIF ); }
 
+"and"      { return token( TK_AND ); }
+"or"       { return token( TK_OR ); }
+"not"      { return token( TK_NOT ); }
 "var"	   { return token( TK_VAR ); }
 "int"      { return token( TK_INT ); }
 "char"     { return token( TK_CHAR ); }

@@ -3,6 +3,7 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <iostream>
+    #include <vector>
     #include <map>
     
     using namespace std;
@@ -23,12 +24,14 @@
         int linha;
     };
 
-    map<string,Tipo> tsVar;
+    vector<string> variaveis;
+
+    map<string, Tipo> tsVar;    
 
     map<string, Tipo> resOpr = {
         { "+II", "I" }, { "+ID", "D" }, { "+DI", "D" }, { "+DD", "D" },
         { "+CC", "S" }, { "+CS", "S" }, { "+SC", "S" }, { "+SS", "S" },
-        { "+CI", "I" }, { "+IC", "I" },
+        { "+CI", "I" }, { "+IC", "I" }, { "+IS", "S" }, { "+SI", "S" },
         { "-II", "I" }, { "-ID", "D" }, { "-DI", "D" }, { "-DD", "D" },
         { "-CC", "S" }, { "-CS", "S" }, { "-SC", "S" }, { "-SS", "S" },
         { "-CI", "I" }, { "-IC", "I" },
@@ -86,6 +89,7 @@
     string geraIfSemElse(Atributos s2, Atributos s4);
     string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9);
     string toString(int n);
+    string guardaTipo(Tipo t);
 
     Atributos declaraVariavelComTipo(Atributos s1, Atributos s2);
     Atributos geraAtribuicao(Atributos s1, Atributos s3);
@@ -96,6 +100,7 @@
     Atributos gera_codigo_comparacao(Atributos s1, string s2, Atributos s3);
     Atributos geraCodigoOperador(Atributos a, string operador, Atributos b);
 
+    Tipo buscaTipoVar(string s);
     Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b);
     Tipo traduzTipo(Tipo t);
 
@@ -105,14 +110,14 @@
 
 %token CINT CDOUBLE TK_ID TK_VAR TK_CONSOLE TK_SHIFTR TK_SHIFTL TK_ENDL
 %token TK_FOR TK_IN TK_2PT TK_IF TK_THEN TK_ELSE TK_BEGIN TK_END 
-%token TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR
+%token TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR TK_NOT
 %token TK_INT TK_CHAR TK_STRING TK_BOOLEAN TK_REAL CCHAR CSTRING 
 
-%nonassoc "&&" "||"
+%nonassoc "and" "or"
 %nonassoc '<' '>' "<=" "=>"  "==" "!="
 %left '+' '-'
 %left '*' '/' '%'
-%right '!'
+%right "not"
 
 %%
 
@@ -141,19 +146,22 @@ CMDX        : ENTRADA
 BLOCO       : TK_BEGIN CMDS TK_END                              { $$.c = $2.c; }
             ;
     
-DECLVAR     : TK_INT VARS                                       { $$ = declaraVariavelComTipo($1, $2); }
-            | TK_CHAR VARS                                      { $$ = declaraVariavelComTipo($1, $2); }
-            | TK_STRING VARS                                    { $$ = declaraVariavelComTipo($1, $2); }
-            | TK_BOOLEAN VARS                                   { $$ = declaraVariavelComTipo($1, $2); }
-            | TK_REAL VARS                                      { $$ = declaraVariavelComTipo($1, $2); }
+DECLVAR     : DECLVAR TIPO VARS                                 { $$.c = $1.c + " " + $2.c + $3.c + ";\n";  $$.t = guardaTipo($2.t);}
+            | TIPO VARS                                         { $$.c = $1.c + " " + $2.c + ";\n";  $$.t = guardaTipo($1.t);}
+
+TIPO        : TK_INT                                            { $$.c = "int"; $$.v = $1.v; $$.t = "I"; }
+            | TK_CHAR                                           { $$.c = "char"; $$.v = $1.v; $$.t = "C"; }
+            | TK_STRING                                         { $$.c = "string"; $$.v = $1.v; $$.t = "S"; }
+            | TK_BOOLEAN                                        { $$.c = "int"; $$.v = $1.v; $$.t = "B"; }
+            | TK_REAL                                           { $$.c = "double"; $$.v = $1.v; $$.t = "D"; }
             ;
     
 VARS        : VARS ',' VAR                                      { $$.c = concatenaVars($1, $3); $$.v = $1.v; }
             | VAR 
             ;
         
-VAR         : TK_ID '[' CINT ']'                                { $$.c = geraVarComArray($1, $3); }
-            | TK_ID                                             { $$.c = $1.v; }
+VAR         : TK_ID '[' CINT ']'                                { $$.c = geraVarComArray($1, $3); variaveis.push_back($1.v); }
+            | TK_ID                                             { $$.c = $1.v; variaveis.push_back($1.v); }
             ;
         
 ENTRADA     : TK_CONSOLE ENTRADAS                               { $$.c = $2.c; }    
@@ -171,9 +179,6 @@ SAIDA       : TK_CONSOLE SAIDAS                                 { $$.c = $2.c; }
 SAIDAS      : TK_SHIFTL E ';'                                   { $$.c = geraSaida($2); }
             | TK_SHIFTL E TK_ENDL ';'                           { $$.c = geraSaida($2); }
             | TK_SHIFTL E SAIDAS                                { $$.c = geraSaida($2) + $3.c; }
-            // | TK_SHIFTL CSTRING ';'                             { $$.c = geraSaida($2); }
-            // | TK_SHIFTL CSTRING TK_ENDL ';'                     { $$.c = geraSaida($2); }
-            // | TK_SHIFTL CSTRING SAIDAS                          { $$.c = geraSaida($2) + $3.c; }
             | TK_SHIFTL TK_ENDL ';'                             { $$.c = "cout << endl;\n "; }
             |                                                   { $$.c = ""; $$.v = ""; }
             ;
@@ -205,20 +210,20 @@ R           : E
             | L
             ;
 
-C           : E '<' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E '>' E                                           { $$ = gera_codigo_operacao($1, $2, $3); }
-            | E TK_MAIG E                                       { $$ = gera_codigo_comparacao($1, ">=", $3); }
-            | E TK_MEIG E                                       { $$ = gera_codigo_comparacao($1, "<=", $3); }
-            | E TK_IG E                                         { $$ = gera_codigo_comparacao($1, "==", $3); }
-            | E TK_DIF E                                        { $$ = gera_codigo_comparacao($1, "!=", $3); }
+C           : E '<' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E '>' E                                           { $$ = geraCodigoOperador($1, $2.v, $3); }
+            | E TK_MAIG E                                       { $$ = geraCodigoOperador($1, ">=", $3); }
+            | E TK_MEIG E                                       { $$ = geraCodigoOperador($1, "<=", $3); }
+            | E TK_IG E                                         { $$ = geraCodigoOperador($1, "==", $3); }
+            | E TK_DIF E                                        { $$ = geraCodigoOperador($1, "<>", $3); }
             ;
 
-L           : C TK_AND C                                        { $$ = gera_codigo_comparacao($1, "&&", $3); }
-            | C TK_OR C                                         { $$ = gera_codigo_comparacao($1, "||", $3); }
+L           : C TK_AND C                                        { $$ = gera_codigo_comparacao($1, "and", $3); }
+            | C TK_OR C                                         { $$ = gera_codigo_comparacao($1, "or", $3); }
             ;
 
 V           : TK_ID '[' E ']'                                   { $$ = geraValorComArray($1, $3); }
-            | TK_ID                                             { $$.c = ""; $$.v = $1.v; $$.t = "I"; }
+            | TK_ID                                             { $$.c = ""; $$.v = $1.v; $$.t = buscaTipoVar($1.v); }
             | CINT                                              { $$.c = ""; $$.v = $1.v; $$.t = "I"; }
             | CDOUBLE                                           { $$.c = ""; $$.v = $1.v; $$.t = "D"; }
             | CSTRING                                           { $$.c = ""; $$.v = $1.v; $$.t = "S"; }
@@ -276,19 +281,20 @@ string geraTemp(Tipo t){
     return nome;
 }
 
-string declaraVar(){
+string declaraVar() {
     string saida;
-    
-    for(auto p: nVar){
-        for(int i = 0; i < p.second; i++ ){
+
+    for( auto p : nVar ){
+        for( int i = 0; i < p.second; i ++ ) {
             string nomeTipo = "double";
-            
-        saida += nomeTipo + " temp_" + p.first + toString(i) + ";\n";
+    
+            saida += nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
         }
     }
-    
+
     return saida;
 }
+
 
 string geraEntrada(Atributos s2){
     Atributos gerado;
@@ -349,16 +355,10 @@ string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9){
 
 Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
     Atributos gerado;
-    
+
     gerado.v = s2.v;
 
     gerado.c = s1.v + " " + s2.c + ";\n";
-
-    if(s1.v == "real"){
-        gerado.c = "double " + s2.c + ";\n";
-    } if(s1.v == "boolean"){
-        gerado.c = "int " + s2.c + ";\n";
-    }
 
     gerado.t = s1.v;
 
@@ -434,16 +434,26 @@ string toString(int n){
     return buf;
 }
 
+string guardaTipo(Tipo t){
+    for(auto p = variaveis.begin(); p != variaveis.end(); ++p){
+        tsVar[*p] = t;
+    }
+
+    variaveis.clear();
+
+    return t;
+}
+
 Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     Atributos r;
-
+    
     r.t = buscaTipoOperacao(a.t, operador, b.t);
 
     if(r.t == ""){
         a.t = traduzTipo(a.t);
         b.t = traduzTipo(b.t);
 
-        string temp = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;    
+        string temp = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;
         yyerror(temp.c_str());
     }
 
@@ -452,6 +462,14 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     r.c = a.c + b.c + " " + r.v + " = " + a.v + operador + b.v + ";\n";
 
     return r;
+}
+
+Tipo buscaTipoVar(string s){
+    if(tsVar[s] == ""){
+        cout << "Tipo da variável " << s << " não encontrado!" << endl;
+    } else {
+        return tsVar[s];
+    }
 }
 
 Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b){
