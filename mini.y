@@ -5,6 +5,7 @@
     #include <iostream>
     #include <vector>
     #include <map>
+    #include <sstream>
     
     using namespace std;
     
@@ -82,7 +83,7 @@
     string concatenaVars(Atributos s1, Atributos s3);
     string geraVarComArray(Atributos s1, Atributos s3);
     string geraTemp(Tipo t);
-    string declaraVar();
+    string declaraTemp();
     string geraEntrada(Atributos s2);
     string geraSaida(Atributos s2);
     string geraIf(Atributos s2, Atributos s4, Atributos s6);
@@ -90,14 +91,17 @@
     string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9);
     string toString(int n);
     string guardaTipo(Tipo t);
+    string comparaStringString(string param1, string param2, string operador, string res);
+    string comparaCharString(string param1, string param2, string operador, string res);
+    string concatenaCharString(string param1, string param2, string res);
 
     Atributos declaraVariavelComTipo(Atributos s1, Atributos s2);
+    Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos s3);
     Atributos geraAtribuicao(Atributos s1, Atributos s3);
     Atributos geraAtribuicaoComArray(Atributos s1, Atributos s3, Atributos s6);
     Atributos geraEntradaComArray(Atributos s2, Atributos s4);
     Atributos geraValorComArray(Atributos s1, Atributos s3); 
-    Atributos gera_codigo_operacao(Atributos s1, Atributos s2, Atributos s3);
-    Atributos gera_codigo_comparacao(Atributos s1, string s2, Atributos s3);
+    Atributos geraCodigoComparacao(Atributos s1, string s2, Atributos s3);
     Atributos geraCodigoOperador(Atributos a, string operador, Atributos b);
 
     Tipo buscaTipoVar(string s);
@@ -146,12 +150,12 @@ CMDX        : ENTRADA
 BLOCO       : TK_BEGIN CMDS TK_END                              { $$.c = $2.c; }
             ;
     
-DECLVAR     : DECLVAR TIPO VARS                                 { $$.c = $1.c + " " + $2.c + $3.c + ";\n";  $$.t = guardaTipo($2.t);}
-            | TIPO VARS                                         { $$.c = $1.c + " " + $2.c + ";\n";  $$.t = guardaTipo($1.t);}
+DECLVAR     : DECLVAR TIPO VARS                                 { $$ = declaraRecursivoVariavelComTipo($1, $2, $3); }
+            | TIPO VARS                                         { $$ = declaraVariavelComTipo($1, $2); }
 
 TIPO        : TK_INT                                            { $$.c = "int"; $$.v = $1.v; $$.t = "I"; }
             | TK_CHAR                                           { $$.c = "char"; $$.v = $1.v; $$.t = "C"; }
-            | TK_STRING                                         { $$.c = "string"; $$.v = $1.v; $$.t = "S"; }
+            | TK_STRING                                         { $$.c = "char"; $$.v = $1.v; $$.t = "S"; }
             | TK_BOOLEAN                                        { $$.c = "int"; $$.v = $1.v; $$.t = "B"; }
             | TK_REAL                                           { $$.c = "double"; $$.v = $1.v; $$.t = "D"; }
             ;
@@ -218,8 +222,8 @@ C           : E '<' E                                           { $$ = geraCodig
             | E TK_DIF E                                        { $$ = geraCodigoOperador($1, "<>", $3); }
             ;
 
-L           : C TK_AND C                                        { $$ = gera_codigo_comparacao($1, "and", $3); }
-            | C TK_OR C                                         { $$ = gera_codigo_comparacao($1, "or", $3); }
+L           : C TK_AND C                                        { $$ = geraCodigoComparacao($1, "and", $3); }
+            | C TK_OR C                                         { $$ = geraCodigoComparacao($1, "or", $3); }
             ;
 
 V           : TK_ID '[' E ']'                                   { $$ = geraValorComArray($1, $3); }
@@ -236,7 +240,8 @@ V           : TK_ID '[' E ']'                                   { $$ = geraValor
 #include "lex.yy.c"
 
 string cabecalho = 
-"#include <iostream>\n\n" 
+"#include <iostream>\n" 
+"#include <string.h>\n\n"
 "using namespace std;\n\n"
 "int main() {\n";
 
@@ -254,7 +259,7 @@ void yyerror( const char* st ){
 
 void geraPrograma(Atributos s1){
   cout << cabecalho
-       << declaraVar()
+       << declaraTemp()
        << s1.c 
        << fim_programa;
 }
@@ -263,7 +268,7 @@ string concatenaVars(Atributos s1, Atributos s3){
     Atributos gerado;
     
     gerado.c = s1.c + ", " + s3.c;
-    
+
     return gerado.c;
 }
 
@@ -281,12 +286,23 @@ string geraTemp(Tipo t){
     return nome;
 }
 
-string declaraVar() {
+string declaraTemp() {
     string saida;
+    string nomeTipo;
 
     for( auto p : nVar ){
         for( int i = 0; i < p.second; i ++ ) {
-            string nomeTipo = "double";
+            if(p.first == "I"){
+                nomeTipo = "int";
+            } else if(p.first == "D"){
+                nomeTipo = "double";
+            } else if(p.first == "S"){
+                nomeTipo = "char";
+            } else if(p.first == "C"){
+                nomeTipo = "char";
+            } else if(p.first == "B"){
+                nomeTipo = "int";
+            }
     
             saida += nomeTipo + " temp_" + p.first + toString( i ) + ";\n";
         }
@@ -353,18 +369,6 @@ string geraFor(Atributos s2, Atributos s5, Atributos s7, Atributos s9){
     return gerado.c;
 }
 
-Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
-    Atributos gerado;
-
-    gerado.v = s2.v;
-
-    gerado.c = s1.v + " " + s2.c + ";\n";
-
-    gerado.t = s1.v;
-
-    return gerado;
-}
-
 Atributos geraAtribuicao(Atributos s1, Atributos s3){
     Atributos gerado;
     
@@ -405,17 +409,7 @@ Atributos geraValorComArray(Atributos s1, Atributos s3){
     return gerado;
 }
 
-Atributos gera_codigo_operacao(Atributos param1, Atributos opr, Atributos param2){
-    Atributos gerado;
-    
-    gerado.v = geraTemp("I");
-    
-    gerado.c = param1.c + param2.c + " " + gerado.v + " = " + param1.v + " " + opr.v + " " + param2.v + ";\n";
-    
-    return gerado;
-}
-
-Atributos gera_codigo_comparacao(Atributos param1, string opr, Atributos param2){
+Atributos geraCodigoComparacao(Atributos param1, string opr, Atributos param2){
     Atributos gerado;
 
     gerado.v = geraTemp("I");
@@ -444,12 +438,90 @@ string guardaTipo(Tipo t){
     return t;
 }
 
-Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
-    Atributos r;
-    
-    r.t = buscaTipoOperacao(a.t, operador, b.t);
+string comparaStringString(string param1, string param2, string operador, string res){    
+    string compVar = geraTemp("I");
 
-    if(r.t == ""){
+    string comp = compVar + " = strncmp(" + param1 + ", " + param2 + ", 255);\n";
+
+    string saida = res + " = " + compVar + " " + operador + " 0;\n";
+
+    return comp + saida;
+}
+
+string comparaCharString(string param1, string param2, string operador, string res){
+    string compVar = geraTemp("I");
+    string charVar = geraTemp("S");
+
+    string charParaString = charVar + "[0] = " + param1 + ";\n" + charVar + "[1] = 0;\n";
+
+    string comp = compVar + " = strncmp(" + charVar + ", " + param2 + ", 255);\n";
+
+    string saida = res + " = " + compVar + " " + operador + " 0;\n";
+
+    return charParaString + comp + saida;
+}
+
+string concatenaCharString(string param1, string param2, string res){
+    string temp = geraTemp("I");
+
+    string charParaString = res + "[0] = " + param1 + ";\n" + res + "[1] = 0;\n";
+
+    string cat = "strncat(" + res + ", " + param2 + ", 255);\n";
+
+    return charParaString + cat;
+}
+
+Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
+    Atributos gerado;
+
+    string temp = geraTemp("I");
+    
+    gerado.t = buscaTipoOperacao(a.t, operador, b.t);
+
+    gerado.v = geraTemp(gerado.t);
+
+    gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v;
+
+    if((a.t == "S") && (b.t == "S")){
+        if(operador == "+"){
+            string inicializa = gerado.v + "[255] = 0;\n";
+
+            string cat = temp + " = strlen(" + gerado.v + ");\n";
+            
+            cat += "strncat(" + a.v + ", " + b.v + ", 255);\n";
+            
+            string copy = "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
+            
+            gerado.c = a.c + b.c + inicializa + cat + copy;
+        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
+                || (operador == "<=") || (operador == "==") || (operador == "!=")){
+                    gerado.c = a.c + b.c + comparaStringString(a.v, b.v, operador, gerado.v);
+        }
+    } else if((a.t == "C") && (b.t == "S")){
+        if(operador == "+"){
+            gerado.c = a.c + b.c + concatenaCharString(a.v, b.v, gerado.v) + ";\n";
+        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
+                || (operador == "<=") || (operador == "==") || (operador == "!=")){
+                    gerado.c = a.c + b.c + comparaCharString(a.v, b.v, operador, gerado.v);
+        }
+    } else if((a.t == "S") && (b.t == "C")){
+        if(operador == "+"){
+            gerado.c = a.c + b.c + concatenaCharString(b.v, a.v, gerado.v) + ";\n";
+        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
+                || (operador == "<=") || (operador == "==") || (operador == "!=")){
+                    gerado.c = a.c + b.c + comparaCharString(a.v, b.v, operador, gerado.v);
+        }
+    } else if(operador == "and"){
+        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " and " + b.v;
+    } else if(operador == "or"){
+        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " or " + b.v;
+    }  else if(operador == "<>"){
+        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " <> " + b.v;
+    } else{
+        gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v;
+    }
+
+    if(gerado.t == ""){
         a.t = traduzTipo(a.t);
         b.t = traduzTipo(b.t);
 
@@ -457,11 +529,46 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
         yyerror(temp.c_str());
     }
 
-    r.v = geraTemp(r.t);
+    return gerado;
+}
 
-    r.c = a.c + b.c + " " + r.v + " = " + a.v + operador + b.v + ";\n";
+Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
+    Atributos gerado;
+    
+    gerado.v = "";
+   
+    gerado.t = guardaTipo(s1.t);
 
-    return r;
+    if(gerado.t == "S"){
+        string aux = "";
+        string token;
+
+        char delimitador = ',';
+
+        stringstream ss(s2.c);
+
+        while(getline(ss, token, delimitador)){
+            gerado.c += "char " + token + "[257];\n";
+
+            aux += token + "[255] = 0;\n";
+        }
+
+        gerado.c += aux; 
+    }
+
+    return gerado;
+}
+
+Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos s3){
+    Atributos gerado;
+
+    gerado.v = "";
+
+    gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
+
+    gerado.t = guardaTipo(s2.t);
+
+    return gerado;
 }
 
 Tipo buscaTipoVar(string s){
@@ -479,12 +586,14 @@ Tipo buscaTipoOperacao(Tipo a, string operador, Tipo b){
 Tipo traduzTipo(Tipo t){
     if(t == "I"){
         t = "int";
-    } if(t == "D"){
+    } else if(t == "D"){
         t = "real";
-    } if(t == "S"){
+    } else if(t == "S"){
         t = "string";
-    } if(t == "C"){
+    } else if(t == "C"){
         t = "char";
+    } else if(t == "B"){
+        t = "boolean";
     }
 
     return t;

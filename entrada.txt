@@ -1,8 +1,7 @@
-string a;
-real b;
-console >> b;
-console >> a;
-if b <= a then
-  console << "a é maior" << endl;
-else
-  console << "b é maior" << endl;
+int i;
+char a, ch;
+a = 'a';
+for i in [0..5] begin
+  ch = i + a;
+  console << i + a << "=" << ch << ';';
+end;
