@@ -94,6 +94,7 @@
     string comparaStringString(string param1, string param2, string operador, string res);
     string comparaCharString(string param1, string param2, string operador, string res);
     string concatenaCharString(string param1, string param2, string res);
+    string imprimeString();
 
     Atributos declaraVariavelComTipo(Atributos s1, Atributos s2);
     Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos s3);
@@ -117,23 +118,22 @@
 %token TK_MAIG TK_MEIG TK_IG TK_DIF TK_AND TK_OR TK_NOT
 %token TK_INT TK_CHAR TK_STRING TK_BOOLEAN TK_REAL CCHAR CSTRING 
 
+%right "not"
 %nonassoc "and" "or"
 %nonassoc '<' '>' "<=" "=>"  "==" "!="
 %left '+' '-'
 %left '*' '/' '%'
-%right "not"
 
 %%
 
-S           : CMDS                                              { geraPrograma($1); }
+S           : DECLVAR CMDS                                      { $$.c = $1.c + imprimeString() + $2.c; $$.v = $1.v; geraPrograma($$); }
             ;  
 
 CMDS        : CMDS CMD                                          { $$.c = $1.c + $2.c; $$.v = $1.v; }
             | CMD       
             ;
     
-CMD         : DECLVAR ';'                                       { $$.c = $1.c; $$.v = $1.v; }
-            | ENTRADA
+CMD         : ENTRADA
             | SAIDA
             | ATR
             | FOR
@@ -150,8 +150,9 @@ CMDX        : ENTRADA
 BLOCO       : TK_BEGIN CMDS TK_END                              { $$.c = $2.c; }
             ;
     
-DECLVAR     : DECLVAR TIPO VARS                                 { $$ = declaraRecursivoVariavelComTipo($1, $2, $3); }
-            | TIPO VARS                                         { $$ = declaraVariavelComTipo($1, $2); }
+DECLVAR     : DECLVAR TIPO VARS ';'                             { $$ = declaraRecursivoVariavelComTipo($1, $2, $3); }
+            | TIPO VARS ';'                                     { $$ = declaraVariavelComTipo($1, $2); }
+            ;
 
 TIPO        : TK_INT                                            { $$.c = "int"; $$.v = $1.v; $$.t = "I"; }
             | TK_CHAR                                           { $$.c = "char"; $$.v = $1.v; $$.t = "C"; }
@@ -247,7 +248,7 @@ string cabecalho =
 
 string fim_programa = 
 "  return 0;\n"
-"}\n";
+"}";
 
 void yyerror( const char* st ){
     puts( st ); 
@@ -261,7 +262,8 @@ void geraPrograma(Atributos s1){
   cout << cabecalho
        << declaraTemp()
        << s1.c 
-       << fim_programa;
+       << fim_programa
+       << endl;
 }
 
 string concatenaVars(Atributos s1, Atributos s3){
@@ -482,6 +484,19 @@ string concatenaCharString(string param1, string param2, string res){
     return charParaString + cat;
 }
 
+string imprimeString(){
+
+    string saida = "";
+
+    for(auto p : tsVar){
+        if(p.second == "S") {
+            saida += p.first + "[255] = 0;\n";
+        }
+    }
+    
+    return saida;
+}
+
 Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
     Atributos gerado;
 
@@ -492,53 +507,57 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
     gerado.v = geraTemp(gerado.t);
 
-    gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v + ";\n";
-
     if((a.t == "S") && (b.t == "S")){
-        if(operador == "+"){
-            string inicializa = a.c + b.c + gerado.v + "[255] = 0;\n" + "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
+        string inicializa = a.c + b.c + gerado.v + "[255] = 0;\n" + "strncpy(" + gerado.v + ", " + a.v + ", 255);\n";
 
-            string cat = temp + " = strlen(" + gerado.v + ");\n";
-            
-            cat += temp2 + " = 255 - " + temp + ";\n";
+        string cat = temp + " = strlen(" + gerado.v + ");\n";
+        
+        cat += temp2 + " = 255 - " + temp + ";\n";
 
-            cat += "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n\n";
+        cat += "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n";
             
-            gerado.c = a.c + b.c + inicializa + cat;
-        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
-                || (operador == "<=") || (operador == "==") || (operador == "!=")){
-                    gerado.c = a.c + b.c + comparaStringString(a.v, b.v, operador, gerado.v);
-        }
+        gerado.c = a.c + b.c + inicializa + cat;
+
+        return gerado;
+
     } else if((a.t == "C") && (b.t == "S")){
-        if(operador == "+"){
-            gerado.c = a.c + b.c + concatenaCharString(a.v, b.v, gerado.v) + ";\n";
-        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
-                || (operador == "<=") || (operador == "==") || (operador == "!=")){
-                    gerado.c = a.c + b.c + comparaCharString(a.v, b.v, operador, gerado.v);
-        }
+        string tempS = geraTemp("S");
+
+        string aux = gerado.v;
+
+        gerado.c = a.c + b.c + aux 
+                    + "sprintf(" + tempS + ", " + "\"" + "%c" + "\"" + ", " + a.v + ");\n" 
+                    + "strncpy(" + gerado.v + ", " + aux + ", 255);\n" 
+                    + temp + " = strlen(" + gerado.v + ");\n" 
+                    + temp2 + " = 255 - " + temp + ";\n" 
+                    + "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n";
+
+        return gerado;
+
     } else if((a.t == "S") && (b.t == "C")){
-        if(operador == "+"){
-            gerado.c = a.c + b.c + concatenaCharString(b.v, a.v, gerado.v) + ";\n";
-        } else if((operador == ">") || (operador == "<") || (operador == ">=") 
-                || (operador == "<=") || (operador == "==") || (operador == "!=")){
-                    gerado.c = a.c + b.c + comparaCharString(a.v, b.v, operador, gerado.v);
-        }
-    } else if(operador == "and"){
-        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " and " + b.v;
-    } else if(operador == "or"){
-        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " or " + b.v;
-    }  else if(operador == "<>"){
-        gerado.c = a.c + b.c + gerado.v + " = " + a.v + " <> " + b.v;
-    } else{
-        gerado.c = a.c + b.c + gerado.v + " = " + a.v + operador + b.v  + ";\n";
-    }
+        string tempS = geraTemp("S");
+
+        string aux = gerado.v;
+
+        gerado.c = a.c + b.c + aux 
+                    + "sprintf(" + tempS + ", " + "\"" + "%c" + "\"" + ", " + a.v + ");\n" 
+                    + "strncpy(" + gerado.v + aux + ", 255);\n" 
+                    + temp + " = strlen(" + gerado.v + ");\n" 
+                    + temp2 + " = 255 - " + temp + ";\n" 
+                    + "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n";
+                    
+        return gerado;
+
+    } 
+
+    gerado.c = a.c + b.c + " " + gerado.v + " = " + a.v + operador + b.v + ";\n";
 
     if(gerado.t == ""){
         a.t = traduzTipo(a.t);
         b.t = traduzTipo(b.t);
 
-        string temp = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;
-        yyerror(temp.c_str());
+        string erro = "Operacao '" + operador + "' inválida entre " + a.t + " e " + b.t;
+        yyerror(erro.c_str());
     }
 
     return gerado;
@@ -546,6 +565,7 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
 Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
     Atributos gerado;
+    string saida;
     
     gerado.v = "";
    
@@ -564,11 +584,7 @@ Atributos declaraVariavelComTipo(Atributos s1, Atributos s2){
 
         while(getline(ss, token, delimitador)){
             gerado.c += "char " + token + "[257];\n";
-
-            aux += token + "[255] = 0;\n";
         }
-
-        gerado.c += aux; 
     }
 
     return gerado;
@@ -581,7 +597,7 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
     gerado.t = guardaTipo(s2.t);
 
-    gerado.c = s1.c + " " + s2.c + s3.c + ";\n";
+    gerado.c = s1.c + " " + s2.c + " " +s3.c + ";\n";
 
      if(gerado.t == "S"){
         string aux = "";
@@ -593,11 +609,8 @@ Atributos declaraRecursivoVariavelComTipo(Atributos s1, Atributos s2, Atributos 
 
         while(getline(ss, token, delimitador)){
             gerado.c += "char " + token + "[257];\n";
-
-            aux += token + "[255] = 0;\n";
         }
 
-        gerado.c += aux; 
     }
 
     return gerado;
