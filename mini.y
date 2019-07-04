@@ -521,16 +521,18 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
         return gerado;
 
     } else if((a.t == "C") && (b.t == "S")){
+
+        string var1 = geraTemp("I");
+        string var2 = geraTemp("I");
+
         string tempS = geraTemp("S");
 
-        string aux = gerado.v;
-
-        gerado.c = a.c + b.c + aux 
+        gerado.c = a.c + b.c
                     + "sprintf(" + tempS + ", " + "\"" + "%c" + "\"" + ", " + a.v + ");\n" 
-                    + "strncpy(" + gerado.v + ", " + aux + ", 255);\n" 
-                    + temp + " = strlen(" + gerado.v + ");\n" 
-                    + temp2 + " = 255 - " + temp + ";\n" 
-                    + "strncat(" + gerado.v + ", " + b.v + ", " + temp2 + ");\n";
+                    + "strncpy(" + gerado.v + ", " + tempS + ", 255);\n" 
+                    + var1 + " = strlen(" + gerado.v + ");\n" 
+                    + var2 + " = 255 - " + var1 + ";\n" 
+                    + "strncat(" + gerado.v + ", " + b.v + ", " + var2 + ");\n";
 
         return gerado;
 

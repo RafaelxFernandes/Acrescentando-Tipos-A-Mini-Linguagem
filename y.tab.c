@@ -2298,7 +2298,7 @@ Atributos geraCodigoOperador(Atributos a, string operador, Atributos b){
 
         string aux = gerado.v;
 
-        gerado.c = a.c + b.c + aux 
+        gerado.c = a.c + b.c
                     + "sprintf(" + tempS + ", " + "\"" + "%c" + "\"" + ", " + a.v + ");\n" 
                     + "strncpy(" + gerado.v + ", " + aux + ", 255);\n" 
                     + temp + " = strlen(" + gerado.v + ");\n" 
